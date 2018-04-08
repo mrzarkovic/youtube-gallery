@@ -45980,6 +45980,13 @@ const AppActions = {
         actionType: AppConstants.RECEIVE_VIDEOS,
         videos: videos
       });
+    },
+
+    removeVideo: function (videoId) {
+      AppDispatcher.handleViewAction({
+        actionType: AppConstants.REMOVE_VIDEO,
+        videoId: videoId
+      });
     }
 };
 
@@ -46089,11 +46096,16 @@ const Video = React.createClass({displayName: "Video",
         let link = 'https://www.youtube.com/embed/' + this.props.video.video_id;
         return (
             React.createElement("div", {className: "c4"}, 
-              React.createElement("h5", null,  this.props.video.title), 
-              React.createElement("iframe", {width: "360", height: "285", src:  link, frameborder: "0", allow: "autoplay; encrypted-media", allowfullscreen: true}), 
+              React.createElement("h5", null,  this.props.video.title, " ", React.createElement("span", {className: "delete"}, React.createElement("a", {href: "", onClick: this.onDelete.bind(this, this.props.video.id)}, "X"))), 
+              React.createElement("iframe", {width: "360", height: "285", src:  link }), 
               React.createElement("p", null,  this.props.video.description)
             )
         );
+    },
+
+    onDelete: function (id, e) {
+      e.preventDefault();
+      AppActions.removeVideo(id);
     }
 });
 
@@ -46124,7 +46136,8 @@ module.exports = VideosList;
 },{"../actions/AppActions":329,"../stores/AppStore":337,"./Video":332,"react":327}],334:[function(require,module,exports){
 module.exports = {
   SAVE_VIDEO: 'SAVE_VIDEO',
-  RECEIVE_VIDEOS: 'RECEIVE_VIDEOS'
+  RECEIVE_VIDEOS: 'RECEIVE_VIDEOS',
+  REMOVE_VIDEO: 'REMOVE_VIDEO'
 };
 
 },{}],335:[function(require,module,exports){
@@ -46183,7 +46196,7 @@ const AppStore = assign({}, EventEmitter.prototype, {
     },
 
     removeVideo: function (videoId) {
-        let index = _videos.findIndex( v => v.video_id == videoId);
+        let index = _videos.findIndex( v => v.id == videoId);
         _videos.splice(index, 1);
     },
     
@@ -46222,6 +46235,18 @@ AppDispatcher.register(function (payload) {
             AppStore.setVideos(action.videos);
 
             AppStore.emitChange();
+            break;
+        case AppConstants.REMOVE_VIDEO:
+            console.log('Removing video...');
+
+            // Store Remove
+            AppStore.removeVideo(action.videoId);
+
+            // API Remove
+            AppAPI.removeVideo(action.videoId);
+
+            AppStore.emitChange();
+            break;
     }
 
     return true;
@@ -46263,6 +46288,11 @@ module.exports = {
             });
             AppActions.receiveVideos(videos);
         });
+    },
+
+    removeVideo: function (videoId) {
+      let database = firebaseApp.database();
+      database.ref('videos/' + videoId).remove();
     }
 };
 

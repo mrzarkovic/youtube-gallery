@@ -14,6 +14,13 @@ const AppActions = {
         actionType: AppConstants.RECEIVE_VIDEOS,
         videos: videos
       });
+    },
+
+    removeVideo: function (videoId) {
+      AppDispatcher.handleViewAction({
+        actionType: AppConstants.REMOVE_VIDEO,
+        videoId: videoId
+      });
     }
 };
 

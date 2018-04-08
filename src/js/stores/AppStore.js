@@ -23,7 +23,7 @@ const AppStore = assign({}, EventEmitter.prototype, {
     },
 
     removeVideo: function (videoId) {
-        let index = _videos.findIndex( v => v.video_id == videoId);
+        let index = _videos.findIndex( v => v.id == videoId);
         _videos.splice(index, 1);
     },
     
@@ -62,6 +62,18 @@ AppDispatcher.register(function (payload) {
             AppStore.setVideos(action.videos);
 
             AppStore.emitChange();
+            break;
+        case AppConstants.REMOVE_VIDEO:
+            console.log('Removing video...');
+
+            // Store Remove
+            AppStore.removeVideo(action.videoId);
+
+            // API Remove
+            AppAPI.removeVideo(action.videoId);
+
+            AppStore.emitChange();
+            break;
     }
 
     return true;
