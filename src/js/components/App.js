@@ -4,6 +4,7 @@ const AppActions = require('../actions/AppActions');
 const AppStore = require('../stores/AppStore');
 
 const AddForm = require('./AddForm');
+const VideosList = require('./VideosList');
 
 function getAppState () {
     return {
@@ -30,6 +31,7 @@ const App = React.createClass({
         return (
             <div>
                 <AddForm />
+                <VideosList videos={ this.state.videos } />
             </div>
         );
     },

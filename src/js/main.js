@@ -4,7 +4,7 @@ const ReactDOM = require('react-dom');
 const App = require('./components/App');
 const AppAPI = require('./utils/appAPI');
 
-// AppAPI.getData();
+AppAPI.getVideos();
 
 ReactDOM.render(
     <App />, 

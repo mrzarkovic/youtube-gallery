@@ -45973,12 +45973,19 @@ const AppActions = {
             actionType: AppConstants.SAVE_VIDEO,
             video: video
         });
+    },
+
+    receiveVideos: function (videos) {
+      AppDispatcher.handleViewAction({
+        actionType: AppConstants.RECEIVE_VIDEOS,
+        videos: videos
+      });
     }
 };
 
 module.exports = AppActions;
 
-},{"../constants/AppConstants":332,"../dispatcher/AppDispatcher":333}],330:[function(require,module,exports){
+},{"../constants/AppConstants":334,"../dispatcher/AppDispatcher":335}],330:[function(require,module,exports){
 const React = require('react');
 
 const AppActions = require('../actions/AppActions');
@@ -46024,13 +46031,14 @@ const AddForm = React.createClass({displayName: "AddForm",
 
 module.exports = AddForm;
 
-},{"../actions/AppActions":329,"../stores/AppStore":335,"react":327}],331:[function(require,module,exports){
+},{"../actions/AppActions":329,"../stores/AppStore":337,"react":327}],331:[function(require,module,exports){
 const React = require('react');
 
 const AppActions = require('../actions/AppActions');
 const AppStore = require('../stores/AppStore');
 
 const AddForm = require('./AddForm');
+const VideosList = require('./VideosList');
 
 function getAppState () {
     return {
@@ -46056,7 +46064,8 @@ const App = React.createClass({displayName: "App",
 
         return (
             React.createElement("div", null, 
-                React.createElement(AddForm, null)
+                React.createElement(AddForm, null), 
+                React.createElement(VideosList, {videos:  this.state.videos})
             )
         );
     },
@@ -46069,12 +46078,56 @@ const App = React.createClass({displayName: "App",
 
 module.exports = App;
 
-},{"../actions/AppActions":329,"../stores/AppStore":335,"./AddForm":330,"react":327}],332:[function(require,module,exports){
+},{"../actions/AppActions":329,"../stores/AppStore":337,"./AddForm":330,"./VideosList":333,"react":327}],332:[function(require,module,exports){
+const React = require('react');
+
+const AppActions = require('../actions/AppActions');
+const AppStore = require('../stores/AppStore');
+
+const Video = React.createClass({displayName: "Video",
+    render: function () {
+        let link = 'https://www.youtube.com/embed/' + this.props.video.video_id;
+        return (
+            React.createElement("div", {className: "c4"}, 
+              React.createElement("h5", null,  this.props.video.title), 
+              React.createElement("iframe", {width: "360", height: "285", src:  link, frameborder: "0", allow: "autoplay; encrypted-media", allowfullscreen: true}), 
+              React.createElement("p", null,  this.props.video.description)
+            )
+        );
+    }
+});
+
+module.exports = Video;
+
+},{"../actions/AppActions":329,"../stores/AppStore":337,"react":327}],333:[function(require,module,exports){
+const React = require('react');
+
+const AppActions = require('../actions/AppActions');
+const AppStore = require('../stores/AppStore');
+
+const Video = require('./Video');
+
+const VideosList = React.createClass({displayName: "VideosList",
+    render: function () {
+        return (
+            React.createElement("div", {className: "row"}, 
+               this.props.videos.map((video, index) => {
+                return React.createElement(Video, {video:  video, key:  index })
+              }) 
+            )
+        );
+    }
+});
+
+module.exports = VideosList;
+
+},{"../actions/AppActions":329,"../stores/AppStore":337,"./Video":332,"react":327}],334:[function(require,module,exports){
 module.exports = {
-  SAVE_VIDEO: 'SAVE_VIDEO'
+  SAVE_VIDEO: 'SAVE_VIDEO',
+  RECEIVE_VIDEOS: 'RECEIVE_VIDEOS'
 };
 
-},{}],333:[function(require,module,exports){
+},{}],335:[function(require,module,exports){
 const Dispatcher = require('flux').Dispatcher;
 const assign = require('object-assign');
 
@@ -46090,21 +46143,21 @@ const AppDispatcher = assign(new Dispatcher(), {
 
 module.exports = AppDispatcher;
 
-},{"flux":192,"object-assign":195}],334:[function(require,module,exports){
+},{"flux":192,"object-assign":195}],336:[function(require,module,exports){
 const React = require('react');
 const ReactDOM = require('react-dom');
 
 const App = require('./components/App');
 const AppAPI = require('./utils/appAPI');
 
-// AppAPI.getData();
+AppAPI.getVideos();
 
 ReactDOM.render(
     React.createElement(App, null), 
     document.getElementById('app')
 );
 
-},{"./components/App":331,"./utils/appAPI":336,"react":327,"react-dom":198}],335:[function(require,module,exports){
+},{"./components/App":331,"./utils/appAPI":338,"react":327,"react-dom":198}],337:[function(require,module,exports){
 const EventEmitter = require('events').EventEmitter;
 const assign = require('object-assign');
 
@@ -46162,6 +46215,13 @@ AppDispatcher.register(function (payload) {
 
             AppStore.emitChange();
             break;
+        case AppConstants.RECEIVE_VIDEOS:
+            console.log('Receiving videos...');
+
+            // Store Save
+            AppStore.setVideos(action.videos);
+
+            AppStore.emitChange();
     }
 
     return true;
@@ -46169,7 +46229,7 @@ AppDispatcher.register(function (payload) {
 
 module.exports = AppStore;
 
-},{"../constants/AppConstants":332,"../dispatcher/AppDispatcher":333,"../utils/appAPI":336,"events":158,"object-assign":195}],336:[function(require,module,exports){
+},{"../constants/AppConstants":334,"../dispatcher/AppDispatcher":335,"../utils/appAPI":338,"events":158,"object-assign":195}],338:[function(require,module,exports){
 const AppActions = require('../actions/AppActions');
 const firebase = require('firebase');
 
@@ -46186,7 +46246,24 @@ module.exports = {
     saveVideo: function (video) {
       let database = firebaseApp.database();
       database.ref('videos').push(video);
+    },
+
+    getVideos: function () {
+      let database = firebaseApp.database();
+        database.ref('videos').once('value', function (snapshot) {
+            let videos = [];
+            snapshot.forEach(function (childSnapshot) {
+                let video = {
+                    id: childSnapshot.key,
+                    title: childSnapshot.val().title,
+                    video_id: childSnapshot.val().video_id,
+                    description: childSnapshot.val().description
+                }
+                videos.push(video);
+            });
+            AppActions.receiveVideos(videos);
+        });
     }
 };
 
-},{"../actions/AppActions":329,"firebase":189}]},{},[334]);
+},{"../actions/AppActions":329,"firebase":189}]},{},[336]);
